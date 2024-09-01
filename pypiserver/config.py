@@ -114,6 +114,7 @@ class DEFAULTS:
     FALLBACK_URL = "https://pypi.org/simple/"
     HEALTH_ENDPOINT = "/health"
     HASH_ALGO = "sha256"
+    PREFIX_COMMON_PATH = "/common"
     INTERFACE = "0.0.0.0"
     LOG_FRMT = "%(asctime)s|%(name)s|%(levelname)s|%(thread)d|%(message)s"
     LOG_ERR_FRMT = "%(body)s: %(exception)s \n%(traceback)s"
@@ -169,6 +170,16 @@ def hash_algo_arg(arg: str) -> t.Optional[str]:
         f"of {hashlib.algorithms_available}, or turn off hashing by "
         "setting --hash-algo to 'off', '0', or 'false'"
     )
+
+
+def prefix_common_path_arg(arg: str) -> t.Optional[str]:
+    """Parse a comon prefix path from the string."""
+    if isinstance(arg, str) and arg.startswith("/"):
+        return arg
+    else:
+        raise argparse.ArgumentTypeError(
+            f"Common path '{arg}' is not available. Please try a new path "
+        )
 
 
 def health_endpoint_arg(arg: str) -> str:
@@ -299,6 +310,15 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         help=(
             "Any `hashlib` available algorithm to use for generating fragments "
             "on package links. Can be disabled with one of (0, no, off, false)."
+        ),
+    )
+
+    parser.add_argument(
+        "--prefix-common-path",
+        default=DEFAULTS.PREFIX_COMMON_PATH,
+        type=prefix_common_path_arg,
+        help=(
+            "访问子路径"
         ),
     )
 
@@ -723,6 +743,7 @@ class RunConfig(_ConfigCommon):
         log_req_frmt: str,
         log_res_frmt: str,
         log_err_frmt: str,
+        prefix_common_path: str,
         auther: t.Optional[t.Callable[[str, str], bool]] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -742,6 +763,7 @@ class RunConfig(_ConfigCommon):
         self.log_req_frmt = log_req_frmt
         self.log_res_frmt = log_res_frmt
         self.log_err_frmt = log_err_frmt
+        self.prefix_common_path = prefix_common_path
         # Derived properties
         self._derived_properties = self._derived_properties + ("auther",)
         self.auther = self.get_auther(auther)
@@ -767,6 +789,7 @@ class RunConfig(_ConfigCommon):
             "log_req_frmt": namespace.log_req_frmt,
             "log_res_frmt": namespace.log_res_frmt,
             "log_err_frmt": namespace.log_err_frmt,
+            "prefix_common_path": namespace.prefix_common_path,
         }
 
     def get_auther(

@@ -199,8 +199,11 @@ def main(argv: t.Sequence[str] = None) -> None:
             "Running bottle with selected server '%s'", config.server_method
         )
 
+    b = bottle.Bottle()
+    b.mount(f"{config.prefix_common_path}", app)
+
     bottle.run(
-        app=app,
+        app=b,
         host=config.host,
         port=config.port,
         server=config.server_method,
